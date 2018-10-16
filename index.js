@@ -3,7 +3,7 @@ const ctx = canvas.getContext("2d");
 const tileSet = new Image();
 const player = new Image();
 canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.height = window.innerWidth;
 
 // keyboard event listeners
 let up = false;
@@ -88,6 +88,12 @@ class Player {
         that.y += 4;
         return;
       }
+      if (that.y > window.innerHeight) {
+        that.y -= 4;
+        console.log("poop");
+        window.scrollTo(0, window.innerHeight + 5);
+        return;
+      }
     }
   }
 
@@ -164,8 +170,8 @@ function draw() {
     drawLayers(0);
     drawLayers(1);
   };
-  tileSet.src = "dungeon_tiles.png";
-  player.src = "death_knight.png";
+  tileSet.src = "assets/dungeon_tiles.png";
+  player.src = "assets/death_knight.png";
 }
 
 let player1 = new Player();
