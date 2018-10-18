@@ -2,14 +2,42 @@ const canvas = document.getElementById("rpg");
 const ctx = canvas.getContext("2d");
 const tileSet = new Image();
 const player = new Image();
-canvas.width = window.innerWidth;
-canvas.height = window.innerWidth;
+canvas.width = 640;
+canvas.height = 640;
+let collision = null;
+let collisionX = [];
+let collisionY = [];
 
-// keyboard event listeners
+// keyboard event listener variable declarations
 let up = false;
 let down = false;
 let left = false;
 let right = false;
+
+// Set map cols, rows, source x & y
+let map = {
+  cols: 20,
+  rows: 20,
+  tsize: 32,
+  getTileX: function(counter, tiles) {
+    return 32 * ((tiles[counter] - 1) % 64);
+  },
+  getTileY: function(counter, tiles) {
+    return 32 * Math.floor((tiles[counter] - 1) / 64);
+  }
+};
+
+// SetInterval for walking animation
+let walk = [0, 48, 96];
+let walkCounter = 0;
+setInterval(function() {
+  walkCounter++;
+  if (walkCounter == 3) {
+    walkCounter = 0;
+  }
+}, 300);
+
+// Key down/up event listeners
 document.addEventListener("keydown", e => {
   e.preventDefault();
   if (left || right || up || down) {
@@ -46,16 +74,22 @@ document.addEventListener("keyup", e => {
 
 // Fetch JSON map data
 let mapObj = null;
-this.map = fetch("http://localhost:5000/map", {
-  method: "get",
-  headers: { "Content-Type": "application/json" }
-})
-  .then(res => res.json())
-  .then(data => {
-    mapObj = data;
-    draw();
-    requestAnimationFrame(gameLoop);
+(async function() {
+  const response = await fetch("http://localhost:5000/map", {
+    method: "get",
+    headers: { "Content-Type": "application/json" }
   });
+  mapObj = await response.json();
+
+  mapObj.layers[1].data.forEach((data, index) => {
+    collisionX.push(map.getTileX(index, mapObj.layers[1].data));
+    collisionY.push(map.getTileY(index, mapObj.layers[1].data));
+  });
+  collisionX = Array.from(new Set([...collisionX]));
+  collisionY = Array.from(new Set([...collisionY]));
+  draw();
+  requestAnimationFrame(gameLoop);
+})();
 
 class Player {
   constructor() {
@@ -70,30 +104,20 @@ class Player {
     let xy = plane == "x" ? 1 : null;
     if (xy) {
       that.x += operator;
-      if (that.x > canvas.width - 60) {
-        that.x -= 4;
-        return;
-      }
-      if (that.x < 26) {
-        that.x += 4;
-        return;
-      }
+      collisionX.forEach(colX => {
+        if (that.x > colX + 32) {
+          that.x -= 4;
+          return;
+        }
+      });
     } else {
       that.y += operator;
-      if (that.y > canvas.height - 70) {
-        that.y -= 4;
-        return;
-      }
-      if (that.y < 26) {
-        that.y += 4;
-        return;
-      }
-      if (that.y > window.innerHeight) {
-        that.y -= 4;
-        console.log("poop");
-        window.scrollTo(0, window.innerHeight + 5);
-        return;
-      }
+      collisionY.forEach(colY => {
+        if (that.y > colY + 32) {
+          that.y -= 4;
+          return;
+        }
+      });
     }
   }
 
@@ -121,28 +145,6 @@ class Player {
   }
 }
 
-// Set map cols, rows, source x & y
-let map = {
-  cols: 20,
-  rows: 20,
-  tsize: 32,
-  getTileX: function(counter, tiles) {
-    return 32 * ((tiles[counter] - 1) % 64);
-  },
-  getTileY: function(counter, tiles) {
-    return 32 * Math.floor((tiles[counter] - 1) / 64);
-  }
-};
-
-let walk = [0, 48, 96];
-let walkCounter = 0;
-setInterval(function() {
-  walkCounter++;
-  if (walkCounter == 3) {
-    walkCounter = 0;
-  }
-}, 300);
-
 function drawLayers(int) {
   let counter = 0;
   for (let c = 0; c < map.cols; c++) {
@@ -156,10 +158,10 @@ function drawLayers(int) {
         y, // source y
         map.tsize, // source width
         map.tsize, // source height
-        (r * canvas.width) / 20, // target x
-        (c * canvas.width) / 20, // target y
-        canvas.width / 20, // target width
-        canvas.width / 20 // target height
+        r * 32, // target x
+        c * 32, // target y
+        32, // target width
+        32 // target height
       );
     }
   }
