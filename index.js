@@ -82,11 +82,11 @@ let mapObj = null;
   mapObj = await response.json();
 
   mapObj.layers[1].data.forEach((data, index) => {
-    collisionX.push(map.getTileX(index, mapObj.layers[1].data));
-    collisionY.push(map.getTileY(index, mapObj.layers[1].data));
+    if (data != 0) {
+      collisionX.push(32 * (index % 20));
+      collisionY.push(32 * Math.floor(index / 20));
+    }
   });
-  collisionX = Array.from(new Set([...collisionX]));
-  collisionY = Array.from(new Set([...collisionY]));
   draw();
   requestAnimationFrame(gameLoop);
 })();
@@ -99,26 +99,30 @@ class Player {
     this.walk = 0;
   }
 
-  draw(plane, operator) {
+  draw(plane, amount) {
     let that = this;
-    let xy = plane == "x" ? 1 : null;
-    if (xy) {
-      that.x += operator;
-      collisionX.forEach(colX => {
-        if (that.x > colX + 32) {
-          that.x -= 4;
-          return;
-        }
-      });
-    } else {
-      that.y += operator;
-      collisionY.forEach(colY => {
-        if (that.y > colY + 32) {
-          that.y -= 4;
-          return;
-        }
-      });
+    if (plane == "x") {
+      that.x += amount;
     }
+    if (plane == "y") {
+      that.y += amount;
+    }
+    collisionX.forEach((colX, index) => {
+      if (
+        that.x < colX + 32 &&
+        that.x + 32 > colX &&
+        that.y < collisionY[index] + 32 &&
+        that.y + 32 > collisionY[index]
+      ) {
+        if (plane == "x") {
+          that.x -= amount;
+        }
+        if (plane == "y") {
+          that.y -= amount;
+        }
+        return;
+      }
+    });
   }
 
   move() {
@@ -190,8 +194,8 @@ function gameLoop() {
     64, // source height
     player1.x, // target x
     player1.y, // target y
-    (canvas.width / 32) * 2, // target width
-    (canvas.height / 32) * 2 // target height);
+    32, // target width
+    32 // target height);
   );
   requestAnimationFrame(gameLoop);
 }
