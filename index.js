@@ -2,12 +2,11 @@ const canvas = document.getElementById("rpg");
 const ctx = canvas.getContext("2d");
 const tileSet = new Image();
 const player = new Image();
-canvas.width = 640;
-canvas.height = 640;
+canvas.width = window.innerWidth / 2;
+canvas.height = window.innerHeight / 2;
 let collision = null;
 let collisionX = [];
 let collisionY = [];
-
 // keyboard event listener variable declarations
 let up = false;
 let down = false;
@@ -16,8 +15,8 @@ let right = false;
 
 // Set map cols, rows, source x & y
 let map = {
-  cols: 20,
-  rows: 20,
+  cols: 100,
+  rows: 100,
   tsize: 32,
   getTileX: function(counter, tiles) {
     return 32 * ((tiles[counter] - 1) % 64);
@@ -84,7 +83,7 @@ let mapObj = null;
   mapObj.layers[1].data.forEach((data, index) => {
     if (data != 0) {
       collisionX.push(32 * (index % 20));
-      collisionY.push(32 * Math.floor(index / 20));
+      collisionY.push(32 * Math.floor(index / 100));
     }
   });
   draw();
@@ -93,8 +92,10 @@ let mapObj = null;
 
 class Player {
   constructor() {
-    this.x = 350;
-    this.y = 350;
+    this.x = canvas.width / 2;
+    this.y = canvas.height / 2;
+    this.reverseX = canvas.width / 2;
+    this.reverseY = canvas.height / 2;
     this.direction = 0;
     this.walk = 0;
   }
@@ -103,22 +104,26 @@ class Player {
     let that = this;
     if (plane == "x") {
       that.x += amount;
+      that.reverseX -= amount;
     }
     if (plane == "y") {
       that.y += amount;
+      that.reverseY -= amount;
     }
     collisionX.forEach((colX, index) => {
       if (
-        that.x < colX + 32 &&
-        that.x + 32 > colX &&
-        that.y < collisionY[index] + 32 &&
-        that.y + 32 > collisionY[index]
+        that.reverseX < colX + 20 &&
+        that.reverseX + 20 > colX &&
+        that.reverseY < collisionY[index] + 20 &&
+        that.reverseY + 20 > collisionY[index]
       ) {
         if (plane == "x") {
           that.x -= amount;
+          that.reverseX += amount;
         }
         if (plane == "y") {
           that.y -= amount;
+          that.reverseY += amount;
         }
         return;
       }
@@ -129,22 +134,22 @@ class Player {
     if (right == true) {
       player1.walk = walk[walkCounter];
       this.direction = 64;
-      this.draw("x", 1.5);
+      this.draw("x", -1.5);
     }
     if (left == true) {
       player1.walk = walk[walkCounter];
       this.direction = 192;
-      this.draw("x", -1.5);
+      this.draw("x", 1.5);
     }
     if (up == true) {
       player1.walk = walk[walkCounter];
       this.direction = 0;
-      this.draw("y", -1.5);
+      this.draw("y", 1.5);
     }
     if (down == true) {
       player1.walk = walk[walkCounter];
       this.direction = 128;
-      this.draw("y", 1.5);
+      this.draw("y", -1.5);
     }
   }
 }
@@ -180,22 +185,88 @@ function draw() {
   player.src = "assets/death_knight.png";
 }
 
+let lastX, lastY;
 let player1 = new Player();
 function gameLoop() {
-  player1.move();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawLayers(0);
-  drawLayers(1);
-  ctx.drawImage(
-    player,
-    player1.walk, // source x
-    player1.direction, // source y
-    48, // source width
-    64, // source height
-    player1.x, // target x
-    player1.y, // target y
-    32, // target width
-    32 // target height);
-  );
+  ctx.save();
+  if (player1.x > canvas.width / 2 && player1.y > canvas.height / 2) {
+    ctx.translate(lastX - canvas.width / 2, lastY - canvas.height / 2);
+  } else if (player1.x > canvas.width / 2) {
+    ctx.translate(lastX - canvas.width / 2, player1.y - canvas.height / 2);
+    lastY = player1.y;
+  } else if (player1.y > canvas.height / 2) {
+    ctx.translate(player1.x - canvas.width / 2, lastY - canvas.height / 2);
+    lastX = player1.x;
+  } else {
+    ctx.translate(player1.x - canvas.width / 2, player1.y - canvas.height / 2);
+    lastX = player1.x;
+    lastY = player1.y;
+  }
+  if (player1.x > canvas.width / 2 && player1.y > canvas.height / 2) {
+    player1.move();
+    drawLayers(0);
+    drawLayers(1);
+    ctx.restore();
+    ctx.drawImage(
+      player,
+      player1.walk, // source x
+      player1.direction, // source y
+      48, // source width
+      64, // source height
+      player1.reverseX, // target x
+      player1.reverseY, // target y
+      32, // target width
+      32 // target height);
+    );
+  } else if (player1.x > canvas.width / 2) {
+    player1.move();
+    drawLayers(0);
+    drawLayers(1);
+    ctx.restore();
+    ctx.drawImage(
+      player,
+      player1.walk, // source x
+      player1.direction, // source y
+      48, // source width
+      64, // source height
+      player1.reverseX, // target x
+      canvas.height / 2, // target y
+      32, // target width
+      32 // target height);
+    );
+  } else if (player1.y > canvas.height / 2) {
+    player1.move();
+    drawLayers(0);
+    drawLayers(1);
+    ctx.restore();
+    ctx.drawImage(
+      player,
+      player1.walk, // source x
+      player1.direction, // source y
+      48, // source width
+      64, // source height
+      canvas.width / 2, // target x
+      player1.reverseY, // target y
+      32, // target width
+      32 // target height);
+    );
+  } else {
+    player1.move();
+    drawLayers(0);
+    drawLayers(1);
+    ctx.restore();
+    ctx.drawImage(
+      player,
+      player1.walk, // source x
+      player1.direction, // source y
+      48, // source width
+      64, // source height
+      canvas.width / 2, // target x
+      canvas.height / 2, // target y
+      32, // target width
+      32 // target height);
+    );
+  }
   requestAnimationFrame(gameLoop);
 }
