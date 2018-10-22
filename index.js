@@ -134,22 +134,22 @@ class Player {
     if (right == true) {
       player1.walk = walk[walkCounter];
       this.direction = 64;
-      this.draw("x", -1.5);
+      this.draw("x", -11.5);
     }
     if (left == true) {
       player1.walk = walk[walkCounter];
       this.direction = 192;
-      this.draw("x", 1.5);
+      this.draw("x", 11.5);
     }
     if (up == true) {
       player1.walk = walk[walkCounter];
       this.direction = 0;
-      this.draw("y", 1.5);
+      this.draw("y", 11.5);
     }
     if (down == true) {
       player1.walk = walk[walkCounter];
       this.direction = 128;
-      this.draw("y", -1.5);
+      this.draw("y", -11.5);
     }
   }
 }
@@ -190,18 +190,18 @@ let player1 = new Player();
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
-  if (player1.x > canvas.width / 2 && player1.y > canvas.height / 2) {
-    ctx.translate(lastX - canvas.width / 2, lastY - canvas.height / 2);
-  } else if (player1.x > canvas.width / 2) {
-    ctx.translate(lastX - canvas.width / 2, player1.y - canvas.height / 2);
+
+  if (player1.reverseX > 3200 - canvas.width / 2) {
+    ctx.translate(-3200 + canvas.width, player1.y - canvas.height / 2);
     lastY = player1.y;
+  } else if (player1.x > canvas.width / 2 && player1.y > canvas.height / 2) {
+    ctx.translate(0, 0);
+  } else if (player1.x > canvas.width / 2) {
+    ctx.translate(0, player1.y - canvas.height / 2);
   } else if (player1.y > canvas.height / 2) {
-    ctx.translate(player1.x - canvas.width / 2, lastY - canvas.height / 2);
-    lastX = player1.x;
+    ctx.translate(player1.x - canvas.width / 2, 0);
   } else {
     ctx.translate(player1.x - canvas.width / 2, player1.y - canvas.height / 2);
-    lastX = player1.x;
-    lastY = player1.y;
   }
   if (player1.x > canvas.width / 2 && player1.y > canvas.height / 2) {
     player1.move();
