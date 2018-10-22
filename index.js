@@ -135,21 +135,33 @@ class Player {
       player1.walk = walk[walkCounter];
       this.direction = 64;
       this.draw("x", -11.5);
+      if (player1.reverseX > 3200 - canvas.width / 2) {
+        endX += 2;
+      }
     }
     if (left == true) {
       player1.walk = walk[walkCounter];
       this.direction = 192;
       this.draw("x", 11.5);
+      if (player1.reverseX > 3200 - canvas.width / 2) {
+        endX -= 2;
+      }
     }
     if (up == true) {
       player1.walk = walk[walkCounter];
       this.direction = 0;
       this.draw("y", 11.5);
+      if (player1.reverseY > 3200 - canvas.width / 2) {
+        endY -= 2;
+      }
     }
     if (down == true) {
       player1.walk = walk[walkCounter];
       this.direction = 128;
       this.draw("y", -11.5);
+      if (player1.reverseY > 3200 - canvas.width / 2) {
+        endY += 2;
+      }
     }
   }
 }
@@ -185,25 +197,90 @@ function draw() {
   player.src = "assets/death_knight.png";
 }
 
-let lastX, lastY;
+let endX = canvas.width / 2;
+let endY = canvas.height / 2;
 let player1 = new Player();
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
-
-  if (player1.reverseX > 3200 - canvas.width / 2) {
+  if (
+    player1.reverseX > 3200 - canvas.width / 2 &&
+    player1.reverseY > 3200 - canvas.width / 2
+  ) {
+    ctx.translate(-3200 + canvas.width, -3200 + canvas.height);
+  } else if (player1.reverseX > 3200 - canvas.width / 2) {
     ctx.translate(-3200 + canvas.width, player1.y - canvas.height / 2);
-    lastY = player1.y;
+  } else if (player1.reverseY > 3200 - canvas.width / 2) {
+    ctx.translate(player1.x - canvas.width / 2, -3200 + canvas.height);
   } else if (player1.x > canvas.width / 2 && player1.y > canvas.height / 2) {
     ctx.translate(0, 0);
+    endX = canvas.width / 2;
+    endY = canvas.height / 2;
   } else if (player1.x > canvas.width / 2) {
     ctx.translate(0, player1.y - canvas.height / 2);
+    endX = canvas.width / 2;
+    endY = canvas.height / 2;
   } else if (player1.y > canvas.height / 2) {
     ctx.translate(player1.x - canvas.width / 2, 0);
+    endX = canvas.width / 2;
+    endY = canvas.height / 2;
   } else {
     ctx.translate(player1.x - canvas.width / 2, player1.y - canvas.height / 2);
+    endX = canvas.width / 2;
+    endY = canvas.height / 2;
   }
-  if (player1.x > canvas.width / 2 && player1.y > canvas.height / 2) {
+  if (
+    player1.reverseX > 3200 - canvas.width / 2 &&
+    player1.reverseY > 3200 - canvas.width / 2
+  ) {
+    player1.move();
+    drawLayers(0);
+    drawLayers(1);
+    ctx.restore();
+    ctx.drawImage(
+      player,
+      player1.walk, // source x
+      player1.direction, // source y
+      48, // source width
+      64, // source height
+      endX, // target x
+      endY, // target y
+      32, // target width
+      32 // target height);
+    );
+  } else if (player1.reverseX > 3200 - canvas.width / 2) {
+    player1.move();
+    drawLayers(0);
+    drawLayers(1);
+    ctx.restore();
+    ctx.drawImage(
+      player,
+      player1.walk, // source x
+      player1.direction, // source y
+      48, // source width
+      64, // source height
+      endX, // target x
+      canvas.height / 2, // target y
+      32, // target width
+      32 // target height);
+    );
+  } else if (player1.reverseY > 3200 - canvas.width / 2) {
+    player1.move();
+    drawLayers(0);
+    drawLayers(1);
+    ctx.restore();
+    ctx.drawImage(
+      player,
+      player1.walk, // source x
+      player1.direction, // source y
+      48, // source width
+      64, // source height
+      canvas.width / 2, // target x
+      endY, // target y
+      32, // target width
+      32 // target height);
+    );
+  } else if (player1.x > canvas.width / 2 && player1.y > canvas.height / 2) {
     player1.move();
     drawLayers(0);
     drawLayers(1);
